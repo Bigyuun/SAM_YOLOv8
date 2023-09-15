@@ -5,7 +5,7 @@ import numpy as np
 import matplotlib.pyplot as plt
 
 # 이미지를 읽어서 바이너리 스케일로 변환
-img = cv2.imread('MIDAS_forceps_285.png', cv2.IMREAD_GRAYSCALE)
+img = cv2.imread('dataset/segment/masks_convert/MIDAS_forceps_285.png', cv2.IMREAD_GRAYSCALE)
 _, biimg = cv2.threshold(img, 127, 255, cv2.THRESH_BINARY_INV)
 
 # 거리 변환 ---①
@@ -16,18 +16,18 @@ dst = (dst/(dst.max()-dst.min()) * 255).astype(np.uint8)
 skeleton = cv2.adaptiveThreshold(dst, 255, cv2.ADAPTIVE_THRESH_GAUSSIAN_C, \
                                                  cv2.THRESH_BINARY, 7, -3)
 # 결과 출력
-
-# plt.subplot(1,3,1)
-# plt.imshow(img)
-# plt.subplot(1,3,2)
-# plt.imshow(dst)
-# plt.subplot(1,3,3)
-# plt.imshow(skeleton)
-# plt.show()
+plt.figure(figsize=(10,10))
+plt.subplot(3,1,1)
+plt.imshow(img)
+plt.subplot(3,1,2)
+plt.imshow(dst)
+plt.subplot(3,1,3)
+plt.imshow(skeleton)
+plt.show()
 
 
 # cv2.imshow('origin', img)
 # cv2.imshow('dist', dst)
-cv2.imshow('skel', skeleton)
-cv2.waitKey(0)
-cv2.destroyAllWindows()
+# cv2.imshow('skel', skeleton)
+# cv2.waitKey(0)
+# cv2.destroyAllWindows()
