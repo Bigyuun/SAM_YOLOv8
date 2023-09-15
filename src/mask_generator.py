@@ -35,7 +35,12 @@ def show_box(box, ax):
     w, h = box[2] - box[0], box[3] - box[1]
     ax.add_patch(plt.Rectangle((x0, y0), w, h, edgecolor='green', facecolor=(0,0,0,0), lw=2))
 
-
+def create_directory(directory):
+    try:
+        if not os.path.exists(directory):
+            os.makedirs(directory)
+    except OSError:
+        print("Error: Failed to create the directory.")
 
 
 #####################################################################################
@@ -50,10 +55,16 @@ predictor = SamPredictor(sam)
 #####################################################################################
 # Datasets setup (img)
 #####################################################################################
+
+
 IMAGES_DIR = os.path.join('dataset', 'segment', 'images')
 IMAGES_PATH_LIST = sorted(glob.glob(IMAGES_DIR+'/*'))
 IMAGES_LIST = sorted(os.listdir(IMAGES_DIR))
-MAST_DIR = os.path.join('dataset', 'segment', 'masks')
+MASK_DIR = os.path.join('dataset', 'segment', 'masks')
+MASK_DIR2 = os.path.join('dataset', 'segment', 'masks_convert')
+create_directory(IMAGES_DIR)
+create_directory(MASK_DIR)
+create_directory(MASK_DIR2)
 
 
 #####################################################################################
@@ -87,6 +98,12 @@ for i, ids in enumerate(IMAGES_PATH_LIST):
     # show_box(input_box, plt.gca())
     # plt.axis('off')
     # plt.show()
+
+    # save mask 255
     mask_image = (masks[0] * 255).astype(np.uint8)  # Convert to uint8 format
-    cv2.imwrite(MAST_DIR + '/' + IMAGES_LIST[i], mask_image)
+    cv2.imwrite(MASK_DIR + '/' + IMAGES_LIST[i], mask_image)
+
+    # save mask 0
+    mask_image = (255 - masks[0] * 255).astype(np.uint8)  # Convert to uint8 format
+    cv2.imwrite(MASK_DIR2 + '/' + IMAGES_LIST[i], mask_image)
 
