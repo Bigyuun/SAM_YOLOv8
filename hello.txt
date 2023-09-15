@@ -1,0 +1,14 @@
+commit 6c275f7a7385585292de03bf8508b2c6bcb3a8d6
+Author: Bigyuun <bigyun9375@gmail.com>
+Date:   Fri Sep 15 17:11:48 2023 +0900
+
+    update
+
+diff --git a/.gitattributes b/.gitattributes
+new file mode 100644
+index 0000000..1f8ee09
+--- /dev/null
++++ b/.gitattributes
+@@ -0,0 +1,2 @@
++.pt filter=lfs diff=lfs merge=lfs -text
++*.pt filter=lfs diff=lfs merge=lfs -text
