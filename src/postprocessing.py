@@ -18,11 +18,11 @@ skeleton = cv2.adaptiveThreshold(dst, 255, cv2.ADAPTIVE_THRESH_GAUSSIAN_C, \
 # 결과 출력
 plt.figure(figsize=(10,10))
 plt.subplot(3,1,1)
-plt.imshow(img)
+plt.imshow(img, cmap=plt.cm.gray)
 plt.subplot(3,1,2)
-plt.imshow(dst)
+plt.imshow(dst, cmap=plt.cm.gray)
 plt.subplot(3,1,3)
-plt.imshow(skeleton)
+plt.imshow(skeleton, cmap=plt.cm.gray)
 plt.show()
 
 

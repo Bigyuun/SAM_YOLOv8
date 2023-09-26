@@ -8,6 +8,7 @@ from IPython.display import display, Image
 import cv2
 import numpy as np
 import matplotlib.pyplot as plt
+import pandas as pd
 
 ultralytics.checks()
 DEVICE = 'cuda'
@@ -46,7 +47,7 @@ def create_directory(directory):
 #####################################################################################
 # Models setup
 #####################################################################################
-model_yolo = YOLO('model/yolov8n_custom.pt')
+model_yolo = YOLO('model/yolov8n_custom_20230926_v2.pt')
 model_yolo.to(DEVICE)
 sam_checkpoint = "model/sam_vit_h_4b8939.pth"
 model_type = "vit_h"
@@ -62,10 +63,20 @@ IMAGES_PATH_LIST = sorted(glob.glob(IMAGES_DIR+'/*'))
 IMAGES_LIST = sorted(os.listdir(IMAGES_DIR))
 MASK_DIR = os.path.join('dataset', 'segment', 'masks')
 MASK_DIR2 = os.path.join('dataset', 'segment', 'masks_convert')
+MASK_DIR3 = os.path.join('dataset', 'segment', 'masks_TF')
+
 create_directory(IMAGES_DIR)
 create_directory(MASK_DIR)
 create_directory(MASK_DIR2)
+create_directory(MASK_DIR3)
 
+CROP_IMG_DIR = os.path.join('dataset', 'segment', 'image_crop')
+CROP_MASK_DIR = os.path.join('dataset', 'segment', 'mask_crop')
+create_directory(CROP_IMG_DIR)
+create_directory(CROP_MASK_DIR)
+
+NO_SAVE_LOG_PATH = 'dataset/segment'
+DF_LOG = pd.DataFrame({'file name': [], 'idx': []})
 
 #####################################################################################
 # generate masks
@@ -75,11 +86,21 @@ for i, ids in enumerate(IMAGES_PATH_LIST):
     results = model_yolo.predict(ids, conf=0.25)
     for result in results:
         boxes = result.boxes
-    bbox = boxes.xyxy.tolist()[0]
-    print(ids)
+
+    try:
+        bbox = boxes.xyxy.tolist()[0]
+    except:
+        os.remove(ids)
+        DF_LOG.loc[len(DF_LOG)] = [ids, str(i)]
+        print("delete the file", IMAGES_PATH_LIST)
+
+        continue
+
+    print('(', i, '/', len(IMAGES_PATH_LIST) , ')', ids, ' ', bbox)
     print(bbox)
 
-    image = cv2.cvtColor(cv2.imread(ids), cv2.COLOR_BGR2RGB)
+    # image = cv2.cvtColor(cv2.imread(ids), cv2.COLOR_BGR2RGB)
+    image = cv2.imread(ids)
     predictor.set_image(image)
 
     input_box = np.array(bbox)
@@ -93,7 +114,7 @@ for i, ids in enumerate(IMAGES_PATH_LIST):
     e_t = time.time()
     print(e_t-s_t)
     # plt.figure(figsize=(10, 10))
-    # plt.imshow(image)
+    # plt.imshow(cv2.cvtColor(image, cv2.COLOR_BGR2RGB))
     # show_mask(masks[0], plt.gca())
     # show_box(input_box, plt.gca())
     # plt.axis('off')
@@ -102,8 +123,36 @@ for i, ids in enumerate(IMAGES_PATH_LIST):
     # save mask 255
     mask_image = (masks[0] * 255).astype(np.uint8)  # Convert to uint8 format
     cv2.imwrite(MASK_DIR + '/' + IMAGES_LIST[i], mask_image)
-
-    # save mask 0
+    #
+    # # save mask 0
     mask_image = (255 - masks[0] * 255).astype(np.uint8)  # Convert to uint8 format
     cv2.imwrite(MASK_DIR2 + '/' + IMAGES_LIST[i], mask_image)
+
+    # save mask True and False
+    mask_image = masks[0].astype(np.uint8)
+    cv2.imwrite(MASK_DIR3 + '/' + IMAGES_LIST[i], mask_image)
+
+
+    ########## CROP ##############
+    # crop image of bbox - raw image
+    print(input_box[0].astype(np.uint16))
+    print(input_box[1].astype(np.uint16))
+    print(input_box[2].astype(np.uint16))
+    print(input_box[3].astype(np.uint16))
+
+    # img_crop = image.crop((input_box[0], input_box[1], input_box[2], input_box[3]))
+    img_crop = image[input_box[1].astype(np.uint16):input_box[3].astype(np.uint16),
+                     input_box[0].astype(np.uint16):input_box[2].astype(np.uint16)]
+    cv2.imwrite(CROP_IMG_DIR + '/' + IMAGES_LIST[i], img_crop)
+
+    # crop image of bbox - mask image
+    mask_crop = (masks[0] * 255).astype(np.uint8)[input_box[1].astype(np.uint16):input_box[3].astype(np.uint16),
+                                                  input_box[0].astype(np.uint16):input_box[2].astype(np.uint16)]
+    cv2.imwrite(CROP_MASK_DIR + '/' + IMAGES_LIST[i], mask_crop)
+
+    print("done")
+DF_LOG.to_csv(NO_SAVE_LOG_PATH + '/no_save_log.csv', index=False)
+
+
+
 
